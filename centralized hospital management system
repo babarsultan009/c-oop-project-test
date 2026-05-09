@@ -1,0 +1,186 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+
+class CentralDatabase {
+private:
+    static CentralDatabase* instance;
+    CentralDatabase() {}
+public:
+    static CentralDatabase* getInstance() {
+        if (instance == nullptr)
+            instance = new CentralDatabase();
+        return instance;
+    }
+    void showMessage() {
+        cout << "Centralized Hospital Database Connected\n";
+    }
+};
+CentralDatabase* CentralDatabase::instance = nullptr;
+
+struct Address {
+    string city;
+    string street;
+};
+
+class Person {
+protected:
+    string name;
+    int age;
+public:
+    Person(string n = "", int a = 0) : name(n), age(a) {}
+    virtual void display() {
+        cout << "Name: " << name << ", Age: " << age << endl;
+    }
+    virtual ~Person() {}
+};
+
+class Counter {
+public:
+    static int totalPatients;
+    const int hospitalID;
+    Counter(int id) : hospitalID(id) {}
+};
+int Counter::totalPatients = 0;
+
+class Patient : public Person {
+    int id;
+    Address addr;
+public:
+    Patient() : Person(), id(0) {}
+    Patient(string n, int a, int i, string city, string street)
+        : Person(n, a), id(i) {
+        addr.city = city;
+        addr.street = street;
+        Counter::totalPatients++;
+    }
+
+    void display() override {
+        cout << "Patient ID: " << id << endl;
+        Person::display();
+        cout << "Address: " << addr.city << ", " << addr.street << endl;
+    }
+
+    ~Patient() {
+        cout << "Patient Destructor called for ID: " << id << endl;
+    }
+
+    friend void showPatient(Patient p);
+};
+
+void showPatient(Patient p) {
+    cout << "[Friend] Patient Name: " << p.name << endl;
+}
+class Doctor : public Person {
+    string specialization;
+public:
+    Doctor(string n = "", int a = 0, string sp = "") : Person(n, a), specialization(sp) {}
+    void display() override {
+        Person::display();
+        cout << "Specialization: " << specialization << endl;
+    }
+};
+
+class Hospital {
+    Patient* patients;
+    int size;
+    int count;
+public:
+    Hospital(int s) {
+        size = s;
+        count = 0;
+        patients = new Patient[size];
+    }
+
+    void addPatient() {
+        if (count >= size) {
+            cout << "Hospital is full!\n";
+            return;
+        }
+        string name, city, street;
+        int age, id;
+
+        cout << "Enter Patient Name: "; cin >> name;
+        cout << "Enter Age: "; cin >> age;
+        cout << "Enter ID: "; cin >> id;
+        cout << "Enter City: "; cin >> city;
+        cout << "Enter Street: "; cin >> street;
+
+        patients[count] = Patient(name, age, id, city, street);
+        count++;
+        cout << "Patient Added Successfully!\n";
+    }
+
+    void showAll() {
+        if (count == 0) {
+            cout << "No patients available.\n";
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            patients[i].display();
+            cout << "------------------\n";
+        }
+    }
+
+    ~Hospital() {
+        delete[] patients;
+        cout << "Hospital Destructor called\n";
+    }
+};
+class Admin {
+public:
+    void showTotal() {
+        cout << "Total Patients: " << Counter::totalPatients << endl;
+    }
+};
+
+int main() {
+    CentralDatabase* db = CentralDatabase::getInstance();
+    db->showMessage();
+
+    Counter c(101);
+    Hospital h(5);
+    Admin admin;
+    Doctor d;
+
+    int choice;
+    do {
+        cout << "\n===== HOSPITAL MANAGEMENT MENU =====\n";
+        cout << "1. Add Patient\n";
+        cout << "2. Show All Patients\n";
+        cout << "3. Show Doctor Info\n";
+        cout << "4. Show Total Patients\n";
+        cout << "5. Exit\n";
+        cout << "Enter Choice: "; cin >> choice;
+
+        switch (choice) {
+        case 1:
+            h.addPatient();
+            break;
+        case 2:
+            h.showAll();
+            break;
+        case 3: {
+            string name, spec;
+            int age;
+            cout << "Enter Doctor Name: "; cin >> name;
+            cout << "Enter Age: "; cin >> age;
+            cout << "Enter Specialization: "; cin >> spec;
+            d = Doctor(name, age, spec);
+            d.display();
+            break;
+        }
+        case 4:
+            admin.showTotal();
+            break;
+        case 5:
+            cout << "Exiting system...\n";
+            break;
+        default:
+            cout << "Invalid choice!\n";
+        }
+    } while (choice != 5);
+
+    return 0;
+}
